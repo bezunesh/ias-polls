@@ -71,3 +71,27 @@ resource "google_compute_firewall" "ssh" {
   }
   target_tags = ["web", "backend"]
 }
+
+# create gke cluster
+resource "google_container_cluster" "primary" {
+  name     = "django-polls"
+  location = "us-east4-a"
+  network  = google_compute_network.vpc_network.name 
+  subnetwork = google_compute_subnetwork.staging.name
+
+  remove_default_node_pool = true
+  initial_node_count       = 1
+}
+
+# create a node-pool
+resource "google_container_node_pool" "primary_preemptible_nodes" {
+  name       = "node-pool-1"
+  location   = "us-east4-a"
+  cluster    = google_container_cluster.primary.name
+  node_count = 1
+
+  node_config {
+    preemptible  = true
+    machine_type = "e2-medium"
+  }
+}
